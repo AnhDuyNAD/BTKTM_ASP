@@ -7,17 +7,17 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Sao chép toàn bộ mã nguồn trước để tránh lỗi
-COPY . .
-
-# Chạy restore dựa vào thư mục chứa csproj
-WORKDIR /src/KTM_ASP
+# Copy file .csproj trước để tận dụng cache
+COPY KTM_ASP.csproj ./
 RUN dotnet restore "KTM_ASP.csproj"
 
-# Build và publish
-RUN dotnet publish -c Release -o /app/publish
+# Copy toàn bộ mã nguồn
+COPY . .
 
-# Chạy ứng dụng
+# Build và publish ứng dụng
+RUN dotnet publish "KTM_ASP.csproj" -c Release -o /app/publish
+
+# Tạo container cuối cùng từ base
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
