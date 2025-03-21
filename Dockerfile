@@ -1,24 +1,36 @@
-# Sử dụng image ASP.NET Core runtime
+# Sử dụng image .NET ASP.NET 8 làm base
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
 
-# Build project
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy file .csproj trước để tận dụng cache
-COPY KTM_ASP.csproj ./
+# Sao chép file .csproj vào container để tận dụng cache
+COPY KTM_ASP/KTM_ASP.csproj KTM_ASP/
+
+# Chuyển vào thư mục dự án
+WORKDIR /src/KTM_ASP
+
+# Khôi phục các package
 RUN dotnet restore "KTM_ASP.csproj"
 
-# Copy toàn bộ mã nguồn
+# Sao chép toàn bộ mã nguồn vào container
 COPY . .
 
-# Build và publish ứng dụng
+# Biên dịch ứng dụng
+RUN dotnet build "KTM_ASP.csproj" -c Release -o /app/build
+
+# Publish ứng dụng
+FROM build AS publish
 RUN dotnet publish "KTM_ASP.csproj" -c Release -o /app/publish
 
-# Tạo container cuối cùng từ base
+# Final stage
 FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
+
+# Chạy ứng dụng
 ENTRYPOINT ["dotnet", "KTM_ASP.dll"]
