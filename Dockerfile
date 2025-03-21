@@ -1,4 +1,4 @@
-﻿# Sử dụng image ASP.NET Core runtime
+# Sử dụng image ASP.NET Core runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
@@ -6,9 +6,15 @@ EXPOSE 80
 # Build project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["KTM_ASP.csproj", "./"]
-RUN dotnet restore "./KTM_ASP.csproj"
+
+# Sao chép toàn bộ mã nguồn trước để tránh lỗi
 COPY . .
+
+# Chạy restore dựa vào thư mục chứa csproj
+WORKDIR /src/KTM_ASP
+RUN dotnet restore "KTM_ASP.csproj"
+
+# Build và publish
 RUN dotnet publish -c Release -o /app/publish
 
 # Chạy ứng dụng
